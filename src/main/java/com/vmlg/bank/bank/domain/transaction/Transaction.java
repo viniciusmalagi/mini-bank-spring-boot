@@ -3,9 +3,7 @@ package com.vmlg.bank.bank.domain.transaction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import com.vmlg.bank.bank.domain.user.User;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

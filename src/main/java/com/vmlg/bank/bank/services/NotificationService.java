@@ -11,11 +11,12 @@ import com.vmlg.bank.bank.dtos.NotificationDTO;
 
 @Service
 public class NotificationService {
-    @Autowired
-    private RestTemplate restTemplate;
+    // @Autowired
+    // private RestTemplate restTemplate;
 
     public void sendNotification(User user, String message) throws Exception{
         String email = user.getEmail();
+        // TODO Notification
         // NotificationDTO notificationDTO = new NotificationDTO(email, message);
         // ResponseEntity<String> notificationResponse = restTemplate.postForEntity("url", notificationDTO, String.class);
         // if (!(notificationResponse.getStatusCode() == HttpStatus.OK)) {

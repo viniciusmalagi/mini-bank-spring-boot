@@ -2,9 +2,7 @@ package com.vmlg.bank.bank.domain.user;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
 import com.vmlg.bank.bank.dtos.UserDTO;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

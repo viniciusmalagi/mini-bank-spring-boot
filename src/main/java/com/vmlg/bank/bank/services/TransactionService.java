@@ -30,6 +30,9 @@ public class TransactionService {
     private NotificationService notificationService;
 
     public Transaction createTransaction(TransactionDTO transaction) throws Exception{
+        if (transaction.value().compareTo(new BigDecimal(0)) < 0){
+            throw new Exception("The transaction value must be positive.");
+        }
         User sender = userService.findUserById(transaction.senderId());
         User receiver = userService.findUserById(transaction.receiverId());
 
@@ -43,19 +46,18 @@ public class TransactionService {
         bankTransaction.setSender(sender);
         bankTransaction.setReceiver(receiver);
         bankTransaction.setTimestamp(LocalDateTime.now());
-
         sender.setBalance(sender.getBalance().subtract(transaction.value()));
         receiver.setBalance(receiver.getBalance().add(transaction.value()));
-
         repository.save(bankTransaction);
         userService.saveUser(sender);
         userService.saveUser(receiver);
-        notificationService.sendNotification(sender, "Transaction sended successfully");
-        notificationService.sendNotification(receiver, "Transaction received successfully");
+        //notificationService.sendNotification(sender, "Transaction sended successfully");
+        //notificationService.sendNotification(receiver, "Transaction received successfully");
         return bankTransaction;
     }
 
     public boolean authorizeTransaction(User sender, BigDecimal value){
+        // TODO
         // ResponseEntity<Map> authorizationResponse = restTemplate.getForEntity("url", Map.class);
         // if (authorizationResponse.getStatusCode() == HttpStatus.OK) {
         //     String message = (String) authorizationResponse.getBody().get("message");

@@ -3,10 +3,8 @@ package com.vmlg.bank.bank.services;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.vmlg.bank.bank.domain.user.User;
 import com.vmlg.bank.bank.domain.user.UserType;
 import com.vmlg.bank.bank.dtos.UserDTO;
@@ -30,7 +28,10 @@ public class UserService {
         return userRepository.findUserById(id).orElseThrow(() -> new Exception("User not found"));
     }
 
-    public User createUser(UserDTO data){
+    public User createUser(UserDTO data) throws Exception{
+        if (data.balance().compareTo(new BigDecimal(0)) < 0) {
+            throw new Exception("The balance value must be positive.");
+        }
         User newUser = new User(data);
         saveUser(newUser);
         return newUser;

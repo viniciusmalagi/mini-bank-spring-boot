@@ -93,9 +93,21 @@ class BankApplicationTests {
 	void testCreateCommonUserFailure() {
 		var commonUserDTO = new UserDTO(
 			"", "",
-			"", new BigDecimal(1),
+			"", new BigDecimal(10),
 			"",
 			"",
+			UserType.COMMON
+		);
+		testWebClientPost("/users", commonUserDTO).is5xxServerError();
+	}
+
+	@Test
+	void testCreateCommonUserWithNegativeBalanceFailure() {
+		var commonUserDTO = new UserDTO(
+			"Michael", "Batista",
+			"90007600", new BigDecimal(-200),
+			"michael@user.com",
+			"passwd",
 			UserType.COMMON
 		);
 		testWebClientPost("/users", commonUserDTO).is5xxServerError();
@@ -206,6 +218,24 @@ class BankApplicationTests {
 				"passwd", UserType.COMMON
 		);
 		BigDecimal amount = new BigDecimal(5250);
+		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
+		testPostTransaction(transactionDTO)
+		.is5xxServerError();
+	}
+
+	@Test
+	void testCreateTransactionWithAnInsufficientNegativeBalanceFailure(){
+		UserDTO senderDto = new UserDTO(
+			"Lays", "Peterson", "30001000",
+			new BigDecimal(500.50), "lays@user.com",
+			"passwd", UserType.COMMON
+		);
+		UserDTO receiverDto = new UserDTO(
+				"Robson", "Peri", "800056000",
+				new BigDecimal(3000), "robson@user.com",
+				"passwd", UserType.MERCHANT
+		);
+		BigDecimal amount = new BigDecimal(-50);
 		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
 		testPostTransaction(transactionDTO)
 		.is5xxServerError();
