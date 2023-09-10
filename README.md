@@ -1,6 +1,6 @@
 **Project Title:** Mini Bank
 
-**Project Description:**
+## **Project Description:**
 
 The "Mini Bank" project is a Spring Boot back-end application that provides a simplified platform for individual and corporate clients to register and perform fund transfers among themselves. This mini bank offers a secure and efficient experience for managing accounts, recording client information, and conducting financial transactions.
 
@@ -30,7 +30,7 @@ The "Mini Bank" project is a Spring Boot back-end application that provides a si
 7. **Reports and Statistics:** (WORK IN PROGRESS)
    - System administrators can generate reports and statistics to analyze the performance of the mini bank, including transaction volume, revenue, expenses, and other relevant metrics.
 
-**Technologies Used:**
+## **Technologies Used:**
 
 - Spring Boot: For the development of the back-end application.
 - Spring Boot Security - Implementation of robust security measures to protect client data.
@@ -39,7 +39,7 @@ The "Mini Bank" project is a Spring Boot back-end application that provides a si
 - JWT - Authentication by JWT Token.
 - Database: For storing client information, accounts, and transactions.
 
-## **Technologies Used:**
+## **Practices Adopted:**
 
  - **SOLID**: SOLID principles were followed to create more modular and flexible code, making it easier to maintain and evolve the system.
 
