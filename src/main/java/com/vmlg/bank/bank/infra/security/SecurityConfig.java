@@ -40,17 +40,12 @@ public class SecurityConfig {
                 authorize.requestMatchers(HttpMethod.POST,"/auth/register").permitAll();
                 authorize.requestMatchers(HttpMethod.GET,"/users").hasRole("ADMIN");
                 authorize.requestMatchers(HttpMethod.POST,"/auth/login").permitAll();
-                authorize.requestMatchers(HttpMethod.POST,"/transactions").hasRole("ADMIN")
+                authorize.requestMatchers(HttpMethod.GET,"/transactions").hasRole("ADMIN")
                 .anyRequest().authenticated();
             })
             .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
-            // .requestMatchers(mvc.pattern(HttpMethod.POST, "/auth/register")).hasRole("ADMIN")
-            // .requestMatchers(mvc.pattern(HttpMethod.GET, "/users")).permitAll()
-            // .requestMatchers(mvc.pattern(HttpMethod.GET, "/swagger-ui/**")).permitAll()
-            // .anyRequest().authenticated()
-            // )
-            // .build();
+
     }
 
     @Bean

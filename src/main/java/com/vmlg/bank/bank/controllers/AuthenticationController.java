@@ -1,6 +1,7 @@
 package com.vmlg.bank.bank.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,12 +11,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vmlg.bank.bank.domain.transaction.Transaction;
 import com.vmlg.bank.bank.domain.user.User;
 import com.vmlg.bank.bank.dtos.AuthenticationDTO;
 import com.vmlg.bank.bank.dtos.RegisterDTO;
+import com.vmlg.bank.bank.dtos.TransactionDTO;
 import com.vmlg.bank.bank.dtos.UserDTO;
 import com.vmlg.bank.bank.dtos.LoginResponseDTO;
 import com.vmlg.bank.bank.services.TokenService;
+import com.vmlg.bank.bank.services.TransactionService;
 import com.vmlg.bank.bank.services.UserService;
 
 import jakarta.validation.Valid;
@@ -31,7 +35,10 @@ public class AuthenticationController {
     private UserService userService;
 
     @Autowired
-    TokenService tokenService;
+    private TokenService tokenService;
+
+     @Autowired
+    private TransactionService transactionService;
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data){
@@ -55,8 +62,8 @@ public class AuthenticationController {
             encryptedPasswd,
             user.userType()
             );
-        userService.createUser(userDto);
-        return ResponseEntity.ok().build();
+        User newUser = userService.createUser(userDto);
+        return new ResponseEntity<User>(newUser, HttpStatus.CREATED);
+        // return ResponseEntity.ok().build();
     }
-    
 }

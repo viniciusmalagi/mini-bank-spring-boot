@@ -9,10 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.util.Pair;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.reactive.server.StatusAssertions;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.vmlg.bank.bank.domain.user.UserType;
+import com.vmlg.bank.bank.dtos.AuthenticationDTO;
 import com.vmlg.bank.bank.dtos.TransactionDTO;
 import com.vmlg.bank.bank.dtos.UserDTO;
 
@@ -28,42 +31,76 @@ class BankApplicationTests {
 		.exchange()
 		.expectStatus();
 	}
+	<T> StatusAssertions testWebClientPostAuth(String uriPost, T dto, String token){
+		return webTestClient.post()
+		.uri(uriPost)
+		.headers(http -> http.setBearerAuth(token))
+		.bodyValue(dto)
+		.exchange()
+		.expectStatus();
+	}
+
+	StatusAssertions testWebClientGetAuth(String uriGet, String token){
+		return webTestClient.get()
+		.uri(uriGet)
+		.headers(http -> http.setBearerAuth(token))
+		.exchange()
+		.expectStatus();
+	}
 
 	void testCreateUserSuccess(UserDTO userDTO) {
-		testWebClientPost("/users", userDTO)
+		testWebClientPost("/auth/register", userDTO)
 		.isCreated()
 		.expectBody()
 		.jsonPath("$").exists()
-		.jsonPath("$.length()").isEqualTo(8)
+		.jsonPath("$.length()").isEqualTo(14)
 		.jsonPath("$.firstName").isEqualTo(userDTO.firstName())
 		.jsonPath("$.lastName").isEqualTo(userDTO.lastName())
 		.jsonPath("$.document").isEqualTo(userDTO.document())
 		.jsonPath("$.balance").isEqualTo(userDTO.balance())
 		.jsonPath("$.email").isEqualTo(userDTO.email())
-		.jsonPath("$.password").isEqualTo(userDTO.password())
 		.jsonPath("$.userType").isEqualTo(userDTO.userType().toString());
 	}
 
 	void testCreateDuplicateUserFailure(UserDTO firstUserDTO, UserDTO secondUserDTO){
 		testCreateUserSuccess(firstUserDTO);
-		testWebClientPost("/users", secondUserDTO).isBadRequest();
+		testWebClientPost("/auth/register", secondUserDTO).isBadRequest();
+	}
+
+	<T> String testGetAttributeByRequest(String uri, String attr, T dto){
+		String attribute = (String) testWebClientPost(uri, dto)
+		.is2xxSuccessful()
+		.expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
+		.returnResult()
+		.getResponseBody().get(attr);
+		return attribute;
 	}
 
 	UUID testGetUUIDByRequest(String uri, UserDTO userDTO){
-		String requestUuid = (String) testWebClientPost(uri, userDTO)
-		.isCreated()
-		.expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
-		.returnResult()
-		.getResponseBody().get("id");
-		return UUID.fromString(requestUuid);
+		return UUID.fromString(testGetAttributeByRequest(uri, "id", userDTO));
+		// String requestUuid = (String) testWebClientPost(uri, userDTO)
+		// .isCreated()
+		// .expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
+		// .returnResult()
+		// .getResponseBody().get("id");
+		// return UUID.fromString(requestUuid);
+	}
+	String testGetTokenByRequest(String uri, AuthenticationDTO authenticationDTO){
+		return testGetAttributeByRequest(uri, "token", authenticationDTO);
+		// String requestToken = (String) testWebClientPost(uri, authenticationDTO)
+		// .isCreated()
+		// .expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
+		// .returnResult()
+		// .getResponseBody().get("token");
+		// return requestToken;
 	}
 
 	TransactionDTO testCreateTransactionDTO(BigDecimal amount,UserDTO senderDto, UserDTO receiverDto){
 		UUID senderUuid = testGetUUIDByRequest(
-			"/users", senderDto
+			"/auth/register", senderDto
 		);
 		UUID receiverUuid = testGetUUIDByRequest(
-			"/users", receiverDto
+			"/auth/register", receiverDto
 		);
 		return new TransactionDTO(
 			amount,
@@ -71,11 +108,36 @@ class BankApplicationTests {
 		);
 	}
 
-	StatusAssertions testPostTransaction(TransactionDTO transactionDTO){
-		return testWebClientPost(
-			"/transactions", transactionDTO
+	StatusAssertions testPostTransaction(TransactionDTO transactionDTO, String token){
+		return testWebClientPostAuth(
+			"/transactions", transactionDTO, token
 		);
 	}
+
+	StatusAssertions testLogin(AuthenticationDTO authenticationDTO){
+		return testWebClientPost("/auth/login", authenticationDTO);
+	}
+
+	StatusAssertions testGetUsers(UserDTO userDTO) {
+		testCreateUserSuccess(userDTO);
+		AuthenticationDTO userAuthDto = new AuthenticationDTO(userDTO.email(), userDTO.password());
+		String token = testGetTokenByRequest("/auth/login", userAuthDto);
+		return testWebClientGetAuth("/users", token);
+	}
+
+	Pair<StatusAssertions, TransactionDTO> testCreateTransaction(UserDTO senderDto, UserDTO receiverDto, BigDecimal amount){
+		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
+		AuthenticationDTO senderAuthDto = new AuthenticationDTO(senderDto.email(), senderDto.password());
+		String senderToken = testGetTokenByRequest("auth/login", senderAuthDto);
+		return Pair.of(testPostTransaction(transactionDTO, senderToken), transactionDTO);
+	}
+
+	// StatusAssertions testCreateTransaction(UserDTO senderDto, UserDTO receiverDto, BigDecimal amount){
+	// 	TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
+	// 	AuthenticationDTO senderAuthDto = new AuthenticationDTO(senderDto.email(), senderDto.password());
+	// 	String senderToken = testGetTokenByRequest("auth/login", senderAuthDto);
+	// 	return testPostTransaction(transactionDTO, senderToken);
+	// }
 
 	@Test
 	void testCreateCommonUserSuccess() {
@@ -98,7 +160,7 @@ class BankApplicationTests {
 			"",
 			UserType.COMMON
 		);
-		testWebClientPost("/users", commonUserDTO).is5xxServerError();
+		testWebClientPost("/auth/register", commonUserDTO).is5xxServerError();
 	}
 
 	@Test
@@ -110,7 +172,7 @@ class BankApplicationTests {
 			"passwd",
 			UserType.COMMON
 		);
-		testWebClientPost("/users", commonUserDTO).is5xxServerError();
+		testWebClientPost("/auth/register", commonUserDTO).is5xxServerError();
 	}
 
 	@Test
@@ -123,6 +185,42 @@ class BankApplicationTests {
 			UserType.MERCHANT
 		);
 		testCreateUserSuccess(merchantUserDTO);
+	}
+
+	@Test
+	void testCreateAdminUserSuccess() {
+		var adminUserDTO = new UserDTO(
+			"Admin", "Admin",
+			"00001001", new BigDecimal(5000),
+			"root@admin.com",
+			"root",
+			UserType.ADMIN
+		);
+		testCreateUserSuccess(adminUserDTO);
+	}
+
+	@Test
+	void testGetUsersByAdminUserSuccess() {
+		var adminUserDTO = new UserDTO(
+			"root", "root",
+			"10001001", new BigDecimal(5000),
+			"root@root.com",
+			"root",
+			UserType.ADMIN
+		);
+		testGetUsers(adminUserDTO).is2xxSuccessful();
+	}
+
+	@Test
+	void testGetUsersByAdminUserFailure() {
+		var adminUserDTO = new UserDTO(
+			"Maria", "Lagos",
+			"12301001", new BigDecimal(2000),
+			"marial@root.com",
+			"password",
+			UserType.COMMON
+		);
+		testGetUsers(adminUserDTO).is4xxClientError();
 	}
 
 	@Test
@@ -164,6 +262,34 @@ class BankApplicationTests {
 	}
 
 	@Test
+	void testLoginSuccess(){
+		UserDTO userDTO = new UserDTO(
+			"Leon", "Gucci", "809821745",
+			new BigDecimal(500), "leon@user.com",
+			"passwd", UserType.COMMON
+		);
+		AuthenticationDTO authenticationDTO = new AuthenticationDTO(
+			userDTO.email(), userDTO.password()
+		);
+		testCreateUserSuccess(userDTO);
+		testLogin(authenticationDTO)
+		.isOk()
+		.expectBody()
+		.jsonPath("$").exists()
+		.jsonPath("$.length()").isEqualTo(1)
+		.jsonPath("$.token").exists();
+	}
+
+	@Test
+	void testLoginFailure(){
+		AuthenticationDTO authenticationDTO = new AuthenticationDTO(
+			"piter@user.com", "myPassword"
+		);
+		testLogin(authenticationDTO)
+		.is5xxServerError();
+	}
+
+	@Test
 	void testCreateTransactionCommonToMerchantSuccess(){
 		UserDTO senderDto = new UserDTO(
 			"Gabriel", "Winchester", "300200100",
@@ -175,16 +301,14 @@ class BankApplicationTests {
 				new BigDecimal(10), "monica@user.com",
 				"passwd", UserType.COMMON
 		);
-		BigDecimal amount = new BigDecimal(75);
-		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
-		testPostTransaction(transactionDTO)
-		.isOk()
+		Pair<StatusAssertions, TransactionDTO> pair = testCreateTransaction(senderDto, receiverDto, new BigDecimal(75));
+		pair.getFirst().isOk()
 		.expectBody()
 		.jsonPath("$").exists()
 		.jsonPath("$.length()").isEqualTo(5)
-		.jsonPath("$.amount").isEqualTo(transactionDTO.value())
-		.jsonPath("$.sender.id").isEqualTo(transactionDTO.senderId().toString())
-		.jsonPath("$.receiver.id").isEqualTo(transactionDTO.receiverId().toString());
+		.jsonPath("$.amount").isEqualTo(pair.getSecond().value())
+		.jsonPath("$.sender.id").isEqualTo(pair.getSecond().senderId().toString())
+		.jsonPath("$.receiver.id").isEqualTo(pair.getSecond().receiverId().toString());
 	}
 
 	@Test
@@ -199,9 +323,8 @@ class BankApplicationTests {
 				new BigDecimal(155), "laura@user.com",
 				"passwd", UserType.COMMON
 		);
-		BigDecimal amount = new BigDecimal(250);
-		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
-		testPostTransaction(transactionDTO)
+		testCreateTransaction(senderDto, receiverDto, new BigDecimal(250))
+		.getFirst()
 		.is5xxServerError();
 	}
 
@@ -217,9 +340,8 @@ class BankApplicationTests {
 				new BigDecimal(155), "erickp@user.com",
 				"passwd", UserType.COMMON
 		);
-		BigDecimal amount = new BigDecimal(5250);
-		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
-		testPostTransaction(transactionDTO)
+		testCreateTransaction(senderDto, receiverDto, new BigDecimal(5250))
+		.getFirst()
 		.is5xxServerError();
 	}
 
@@ -235,9 +357,8 @@ class BankApplicationTests {
 				new BigDecimal(3000), "robson@user.com",
 				"passwd", UserType.MERCHANT
 		);
-		BigDecimal amount = new BigDecimal(-50);
-		TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
-		testPostTransaction(transactionDTO)
+		testCreateTransaction(senderDto, receiverDto, new BigDecimal(-50))
+		.getFirst()
 		.is5xxServerError();
 	}
 }
