@@ -11,8 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.vmlg.bank.bank.domain.transaction.Transaction;
-import com.vmlg.bank.bank.domain.user.User;
 import com.vmlg.bank.bank.dtos.TransactionDTO;
+import com.vmlg.bank.bank.dtos.TransactionSuccessfullyDTO;
+import com.vmlg.bank.bank.exceptions.TransactionsException;
 import com.vmlg.bank.bank.services.TransactionService;
 
 @RestController
@@ -22,9 +23,15 @@ public class TransactionController {
     private TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody TransactionDTO transaction) throws Exception{
+    public ResponseEntity createTransaction(@RequestBody TransactionDTO transaction) throws TransactionsException{
         Transaction newTransaction = transactionService.createTransaction(transaction);
-        return new ResponseEntity<>(newTransaction, HttpStatus.OK);
+        return ResponseEntity.ok(
+            new TransactionSuccessfullyDTO(
+                newTransaction.getSender().getId(),
+                newTransaction.getReceiver().getId(),
+                newTransaction.getAmount(),
+                newTransaction.getTimestamp()
+            ));
     }
 
     @GetMapping
