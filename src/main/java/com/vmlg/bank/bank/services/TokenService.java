@@ -12,6 +12,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.vmlg.bank.bank.domain.user.User;
+import com.vmlg.bank.bank.exceptions.AuthException;
 
 @Service
 public class TokenService {
@@ -29,7 +30,7 @@ public class TokenService {
             .sign(algorithm);
             return token;
         } catch (JWTCreationException e) {
-            throw new RuntimeException("Error while generating token", e);
+            throw new AuthException("Error while generating token", e);
         }
     }
 
