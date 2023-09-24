@@ -1,11 +1,13 @@
 package com.vmlg.bank.bank.dtos;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
-public record TransactionSuccessfullyDTO(
+
+public record TransactionProcessDTO(
     UUID sender, UUID receiver, BigDecimal value,
-    LocalDateTime timestamp, String transactionStatus
+    String transactionStatus
 ) 
-{}
+{
+}
