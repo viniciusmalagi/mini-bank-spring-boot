@@ -11,4 +11,5 @@ import com.vmlg.bank.bank.domain.user.User;
 
 public interface TransactionRepository extends JpaRepository<Transaction, UUID>{
     Optional<List<TransactionReportCustom>> findAllBySender(User user);
+    Optional<Transaction> getTransactionById(UUID uuid);
 }

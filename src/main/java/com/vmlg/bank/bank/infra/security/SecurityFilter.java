@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.vmlg.bank.bank.repositores.user.UserRepository;
-import com.vmlg.bank.bank.services.TokenService;
+import com.vmlg.bank.bank.services.authentication.TokenService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
