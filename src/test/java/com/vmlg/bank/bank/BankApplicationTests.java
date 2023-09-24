@@ -10,10 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.util.Pair;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.reactive.server.StatusAssertions;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import com.vmlg.bank.bank.domain.transaction.TransactionStatus;
 import com.vmlg.bank.bank.domain.user.UserType;
 import com.vmlg.bank.bank.dtos.AuthenticationDTO;
 import com.vmlg.bank.bank.dtos.TransactionDTO;
@@ -78,21 +78,10 @@ class BankApplicationTests {
 
 	UUID testGetUUIDByRequest(String uri, UserDTO userDTO){
 		return UUID.fromString(testGetAttributeByRequest(uri, "id", userDTO));
-		// String requestUuid = (String) testWebClientPost(uri, userDTO)
-		// .isCreated()
-		// .expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
-		// .returnResult()
-		// .getResponseBody().get("id");
-		// return UUID.fromString(requestUuid);
 	}
+
 	String testGetTokenByRequest(String uri, AuthenticationDTO authenticationDTO){
 		return testGetAttributeByRequest(uri, "token", authenticationDTO);
-		// String requestToken = (String) testWebClientPost(uri, authenticationDTO)
-		// .isCreated()
-		// .expectBody(new ParameterizedTypeReference<Map<String, Object>>() {})
-		// .returnResult()
-		// .getResponseBody().get("token");
-		// return requestToken;
 	}
 
 	TransactionDTO testCreateTransactionDTO(BigDecimal amount,UserDTO senderDto, UserDTO receiverDto){
@@ -104,7 +93,8 @@ class BankApplicationTests {
 		);
 		return new TransactionDTO(
 			amount,
-			senderUuid, receiverUuid
+			senderUuid,
+			receiverUuid
 		);
 	}
 
@@ -131,13 +121,6 @@ class BankApplicationTests {
 		String senderToken = testGetTokenByRequest("auth/login", senderAuthDto);
 		return Pair.of(testPostTransaction(transactionDTO, senderToken), transactionDTO);
 	}
-
-	// StatusAssertions testCreateTransaction(UserDTO senderDto, UserDTO receiverDto, BigDecimal amount){
-	// 	TransactionDTO transactionDTO = testCreateTransactionDTO(amount, senderDto, receiverDto);
-	// 	AuthenticationDTO senderAuthDto = new AuthenticationDTO(senderDto.email(), senderDto.password());
-	// 	String senderToken = testGetTokenByRequest("auth/login", senderAuthDto);
-	// 	return testPostTransaction(transactionDTO, senderToken);
-	// }
 
 	@Test
 	void testCreateCommonUserSuccess() {
@@ -172,7 +155,7 @@ class BankApplicationTests {
 			"passwd",
 			UserType.COMMON
 		);
-		testWebClientPost("/auth/register", commonUserDTO).is5xxServerError();
+		testWebClientPost("/auth/register", commonUserDTO).isBadRequest();
 	}
 
 	@Test
@@ -286,11 +269,11 @@ class BankApplicationTests {
 			"piter@user.com", "myPassword"
 		);
 		testLogin(authenticationDTO)
-		.is5xxServerError();
+		.isBadRequest();
 	}
 
 	@Test
-	void testCreateTransactionCommonToMerchantSuccess(){
+	void testCreateTransactionCommonToMerchantProcess(){
 		UserDTO senderDto = new UserDTO(
 			"Gabriel", "Winchester", "300200100",
 			new BigDecimal(100), "gab@user.com",
@@ -305,10 +288,11 @@ class BankApplicationTests {
 		pair.getFirst().isOk()
 		.expectBody()
 		.jsonPath("$").exists()
-		.jsonPath("$.length()").isEqualTo(5)
-		.jsonPath("$.amount").isEqualTo(pair.getSecond().value())
-		.jsonPath("$.sender.id").isEqualTo(pair.getSecond().senderId().toString())
-		.jsonPath("$.receiver.id").isEqualTo(pair.getSecond().receiverId().toString());
+		.jsonPath("$.length()").isEqualTo(4)
+		.jsonPath("$.value").isEqualTo(pair.getSecond().value())
+		.jsonPath("$.sender").isEqualTo(pair.getSecond().senderId().toString())
+		.jsonPath("$.receiver").isEqualTo(pair.getSecond().receiverId().toString())
+		.jsonPath("$.transactionStatus").isEqualTo(TransactionStatus.PROCESSING.name());
 	}
 
 	@Test
@@ -325,7 +309,7 @@ class BankApplicationTests {
 		);
 		testCreateTransaction(senderDto, receiverDto, new BigDecimal(250))
 		.getFirst()
-		.is5xxServerError();
+		.isBadRequest();
 	}
 
 	@Test
@@ -342,7 +326,7 @@ class BankApplicationTests {
 		);
 		testCreateTransaction(senderDto, receiverDto, new BigDecimal(5250))
 		.getFirst()
-		.is5xxServerError();
+		.isBadRequest();
 	}
 
 	@Test
@@ -359,6 +343,6 @@ class BankApplicationTests {
 		);
 		testCreateTransaction(senderDto, receiverDto, new BigDecimal(-50))
 		.getFirst()
-		.is5xxServerError();
+		.isBadRequest();
 	}
 }
