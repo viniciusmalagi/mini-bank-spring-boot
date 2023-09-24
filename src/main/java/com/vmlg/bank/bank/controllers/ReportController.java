@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vmlg.bank.bank.dtos.ReportDTO;
 import com.vmlg.bank.bank.exceptions.UsersException;
 import com.vmlg.bank.bank.repositores.transaction.TransactionReportCustom;
-import com.vmlg.bank.bank.services.ReportService;
+import com.vmlg.bank.bank.services.report.ReportService;
 
 @RestController
 @RequestMapping("/report")
@@ -24,7 +24,7 @@ public class ReportController {
     private ReportService reportService;
     
     @GetMapping("{id}")
-    public ResponseEntity getTransactionsReport(@PathVariable("id") UUID uuid) throws UsersException{
+    public ResponseEntity<ReportDTO> getTransactionsReport(@PathVariable("id") UUID uuid) throws UsersException{
         BigDecimal balance = reportService.findUserById(uuid).getBalance();
         List<TransactionReportCustom> transactions = reportService.getAllTransactionsBySenderId(uuid);
         return ResponseEntity.ok(new ReportDTO(balance, transactions));
