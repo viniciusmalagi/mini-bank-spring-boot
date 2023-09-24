@@ -1,4 +1,4 @@
-package com.vmlg.bank.bank.services;
+package com.vmlg.bank.bank.services.authentication;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

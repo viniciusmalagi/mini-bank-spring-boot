@@ -1,4 +1,4 @@
-package com.vmlg.bank.bank.services;
+package com.vmlg.bank.bank.services.report;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +11,7 @@ import com.vmlg.bank.bank.domain.user.User;
 import com.vmlg.bank.bank.exceptions.UsersException;
 import com.vmlg.bank.bank.repositores.transaction.TransactionReportCustom;
 import com.vmlg.bank.bank.repositores.transaction.TransactionRepository;
+import com.vmlg.bank.bank.services.user.UserService;
 
 @Service
 public class ReportService extends UserService{

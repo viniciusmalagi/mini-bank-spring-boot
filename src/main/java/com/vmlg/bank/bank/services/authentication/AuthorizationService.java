@@ -1,4 +1,4 @@
-package com.vmlg.bank.bank.services;
+package com.vmlg.bank.bank.services.authentication;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

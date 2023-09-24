@@ -1,4 +1,4 @@
-package com.vmlg.bank.bank.services;
+package com.vmlg.bank.bank.services.user;
 
 import java.math.BigDecimal;
 import java.util.List;
